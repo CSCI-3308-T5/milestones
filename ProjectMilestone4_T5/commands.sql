@@ -16,49 +16,30 @@ CREATE SCHEMA "gcSchema"
 	AUTHORIZATION postgres;
 
 --user table
-CREATE TABLE "gcSchema"."User Table"
+CREATE TABLE "gcSchema".users
 (
-    username character varying(40) COLLATE pg_catalog."default" NOT NULL,
-    "loginID" integer NOT NULL,
-    "gameID" integer NOT NULL,
-    "aboutMe" text COLLATE pg_catalog."default",
+    id integer NOT NULL DEFAULT nextval('"gcSchema".users_id_seq'::regclass),
+    username character varying(64) COLLATE pg_catalog."default" NOT NULL,
+    email character varying(100) COLLATE pg_catalog."default" NOT NULL,
+    hashpass character varying(128) COLLATE pg_catalog."default" NOT NULL,
     "pictureURL" text COLLATE pg_catalog."default",
-    CONSTRAINT "User Table_pkey" PRIMARY KEY (username)
+    "aboutMe" text COLLATE pg_catalog."default",
+    CONSTRAINT users_pkey PRIMARY KEY (id)
 )
 WITH (
     OIDS = FALSE
 )
 TABLESPACE pg_default;
 
-ALTER TABLE "gcSchema"."User Table"
+ALTER TABLE "gcSchema".users
     OWNER to postgres;
-COMMENT ON TABLE "gcSchema"."User Table"
-    IS 'the first iteration of the user table';
-
---Login Table:
-
-CREATE TABLE "gcSchema"."Login Table"
-(
-    "LoginID" integer NOT NULL,
-    email character varying(50) COLLATE pg_catalog."default" NOT NULL,
-    salt character(128) COLLATE pg_catalog."default" NOT NULL,
-    phash character varying(64) COLLATE pg_catalog."default" NOT NULL,
-    CONSTRAINT "Login Table_pkey" PRIMARY KEY ("LoginID")
-)
-WITH (
-    OIDS = FALSE
-)
-TABLESPACE pg_default;
-
-ALTER TABLE "gcSchema"."Login Table"
-    OWNER to postgres;
-COMMENT ON TABLE "gcSchema"."Login Table"
-    IS 'First iteration of the login table';
+COMMENT ON TABLE "gcSchema".users
+    IS 'table for storing user information';
 
 --Game Ratings
 CREATE TABLE "gcSchema"."Game Ratings"
 (
-    "gamesID" integer NOT NULL,
+    username character varying(64) NOT NULL,
     game_a smallint,
     game_b smallint,
     game_c smallint,
@@ -85,7 +66,9 @@ CREATE TABLE "gcSchema"."Game Ratings"
     game_x smallint,
     game_y smallint,
     game_z smallint,
-    CONSTRAINT "Game Ratings_pkey" PRIMARY KEY ("gamesID")
+    CONSTRAINT "Game Ratings_pkey" PRIMARY KEY ("username"),
+    CONSTRAINT "Game Ratings_fkey" FOREIGN KEY ("username")
+    REFERENCES "gcSchema".users ("username")
 )
 WITH (
     OIDS = FALSE
@@ -95,7 +78,7 @@ TABLESPACE pg_default;
 ALTER TABLE "gcSchema"."Game Ratings"
     OWNER to postgres;
 COMMENT ON TABLE "gcSchema"."Game Ratings"
-    IS 'first iteration of game ratings table';
+    IS 'table for storing game ratings';
 
 --Game Info
 CREATE TABLE "gcSchema"."Game Info"
@@ -113,6 +96,29 @@ TABLESPACE pg_default;
 ALTER TABLE "gcSchema"."Game Info"
     OWNER to postgres;
 COMMENT ON TABLE "gcSchema"."Game Info"
-    IS 'first iteration of game info table';
+    IS 'A table with information about the games';
 
---TODO Set Up Foriegn Keys
+
+--Applying additional constraints
+ALTER TABLE "gcSchema".users
+    ADD CONSTRAINT users_username_key UNIQUE (username);
+
+ALTER TABLE "gcSchema".users
+    ADD CONSTRAINT users_email_key UNIQUE (email);
+
+--Some scripts to add some table data
+INSERT INTO "gcSchema".users(username, email, hashpass)
+VALUES ('scramble_campbell', 'scramble_campbell@gmail.com', '1234');
+
+INSERT INTO "gcSchema"."Game Ratings" (username, game_a, game_c, game_w)
+VALUES ('scramble_campbell', 5, 5, 5);
+
+INSERT INTO "gcSchema".users(username, email, hashpass)
+VALUES ('martin_the_carton', 'martin_the_carton@outlook.com', '1234');
+
+INSERT INTO "gcSchema"."Game Ratings" (username, game_b, game_x, game_y)
+VALUES ('martin_the_carton', 1, 3, 4);
+
+INSERT INTO "gcSchema"."Game Info" ("gameName", "gameDescription")
+VALUES ('game_b', 'Ever wanted to play a video game all about the letter b?
+    \nneither did we, but we went ahead and made one anyway!');
